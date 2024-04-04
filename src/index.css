@@ -37,8 +37,9 @@ canvas {
     @apply flex items-center justify-center;
   }
 
+  /* calc(100vh-60px)= calcul pour faire la soustraction 100vh-60px / Ainsi une fois appliqué à un element it will set it's height to the full height of the viewport (100vh) - 60px; to leave a specific space at the bottom */
   .nav-height {
-    @apply h-[calc(100vh-60px)];
+    @apply h-[calc(100vh-60px)]; 
   }
 
   .btn {
@@ -89,6 +90,7 @@ canvas {
     @apply ml-4 p-4 rounded-full bg-gray-300 backdrop-blur flex-center;
   }
 
+  /* opacity-0 = hide the element so that we can make it appear with an animation */
   .hero-title {
     @apply text-center font-semibold text-3xl text-gray-100 opacity-0 max-md:mb-10;
   }
