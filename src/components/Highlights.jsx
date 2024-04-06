@@ -1,6 +1,7 @@
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { rightImg, watchImg } from "../utils";
+import VideoCarousel from "./VideoCarousel";
 
 const Highlights = () => {
   useGSAP(() => {
@@ -12,8 +13,8 @@ const Highlights = () => {
     gsap.to(".link", {
       opacity: 1,
       y: 0,
-      duration:1,
-      stagger:0.25 //Ecart de début d'animation entre les 2 élements avec className="link"
+      duration: 1,
+      stagger: 0.25, //Ecart de début d'animation entre les 2 élements avec className="link"
     });
   }, []);
 
@@ -37,6 +38,9 @@ const Highlights = () => {
               <img src={rightImg} alt="right" className="ml-2" />
             </p>
           </div>
+        </div>
+        <div>
+          <VideoCarousel />
         </div>
       </div>
     </section>
