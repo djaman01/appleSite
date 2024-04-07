@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useEffect } from "react";
 import gsap from "gsap";
 import { pauseImg, playImg, replayImg } from "../utils";
+import { useGSAP } from "@gsap/react";
 
 const VideoCarousel = () => {
   //Creating references to specic elements, so we can keep track of the video we're on
@@ -20,22 +21,46 @@ const VideoCarousel = () => {
     isPlaying: false,
   });
 
+  //!!!!!Ce sont ces states qui vont nous permettre de start les vidéos du slide
+  //!!!!!Car le useEffect qui controle le départ des vidéos, a pour condition de départ l'existence de la state loadedData, qui doit avoir un length >3
   const [loadedData, setLoadedData] = useState([]);
 
   //Now we destructure the values so we can use  them without writing video.isEnd but just isEnd
   const { isEnd, startPlay, videoId, isLastVideo, isPlaying } = video;
 
-  //useEffect that will deal with the playing of the video
+  //!!!!Using gsap to program the videos in the slide to play WHEN THEY ARE IN THE VIEW (quand on les voient sur la page)
+  useGSAP(()=>{
+    gsap.to('#video', {
+      scrollTrigger: {
+        trigger:'#video',//La video se lance quand on arrive à l'element avec id=video
+        toggleActions: 'restart none none none' //Quand on voit la video elle restart
+      },
+      onComplete: ()=>{ //Quand on a complété la video
+        setVideo((prev)=>({
+          ...prev, //On spread les properties de la previous state de la video, pour pvr en faire une copie et changer les properties qu'on veut
+          startPlay:true,
+          isPlaying:true,
+        }))
+      }
+    })
+  },[isEnd, videoId]) //to update stuff when the videoId changes + isEnd state value
+
+
+
+  //!!!!!!:useEffect TO PLAY THE VIDEO, DEPENDING ON THE EXISTENCE OF THE STATE loadedData AND if it has a length > 3
   //explication: if we came to the end, and we're no longer playing the video THEN pause it ELSE, if it's playing THEN IF startPlay is ALSO true THEN we find a specic video we want to trigger, and we play it
   useEffect(() => {
-    if (loadedData.length > 3) {
+    if (loadedData.length > 3) {//IF loadedData exists AND had a length > 3
       if (!isPlaying) {
-        videoRef.current[videoId].pause();
-      } else {
-        startPlay && videoRef.current[videoId].play();
+        videoRef.current[videoId].pause(); //Pause the video
+      } else if(startPlay) {
+        videoRef.current[videoId].play(); //!!! PLAY THE VIDEO
       }
     }
   }, [startPlay, videoId, isPlaying, loadedData]);
+
+  //On va gérer la state loadedData pour lui donner une valeur = event we pass on it; et que les vidéos démarrent // event = event we pass into it when we call handleLoadedMetaData
+  const handleLoadedMetaData = (index, event) => setLoadedData((prevLoadedData) => [...prevLoadedData, event])
 
   //useEffect that will animates the progress bar of the video
   useEffect(() => {
@@ -50,6 +75,39 @@ const VideoCarousel = () => {
       });
     }
   }, [videoId, startPlay]);
+
+  //Function à appeler quand on clique sur le play/pause/reset bouton du slide / paramètres: type = type of action we click on: play/pause/reset
+  //Comme il y a pleins de cas, on va utiliser "switch" statement au lieu de if/elseIf
+  const handleProcess = (type, i) => {
+    switch (type) {
+      case "video-end": //si type='video-end'== end of the video, on spread les value de la prevues videos et on change les valeurs de isEnd et videoId
+        setVideo((prevVideo) => ({
+          ...prevVideo, //On utilise le spread opeartor, pour pouvoir modifier les values des properties de la prevVideo
+          isEnd: true,
+          videoId: i + 1,
+        }));
+        break;
+      case "video-last": //si type='video-last'== last video
+        setVideo((prevVideo) => ({ ...prevVideo, isLastVideo: true }));
+        break;
+      case "video-reset": //on va reset le videoId à 0, pour rejouer la video
+        setVideo((prevVideo) => ({
+          ...prevVideo,
+          isLastVideo: false,
+          videoId: 0,
+        }));
+        break;
+      case "play":
+        setVideo((prevVideo) => ({
+          ...prevVideo,
+          isPlaying: !prevVideo.isPlaying,
+        }));
+        break;
+
+      default:
+        return video; //state variable qui contient les videos et les properties ci-dessu
+    }
+  };
 
   return (
     <>
@@ -76,6 +134,8 @@ const VideoCarousel = () => {
                       isPlaying: true,
                     }));
                   }}
+                  //onLoadedMetadata will call handleLoadedMetaData that will call setLoadedData THEN the useEffect with loadedData state will trigger the video Play
+                  onLoadedMetadata={(event) => handleLoadedMetaData(i, event)} //onLoadedMetadata= This will get triggered once the Meta data of the video had loaded (=id, playsInline, preLoad ..etc bred, la data) Puis on y passe l'index de la vdieo et l'event
                 >
                   <source src={e.video} type="video/mp4" />
                 </video>
@@ -116,7 +176,13 @@ const VideoCarousel = () => {
           <img
             src={isLastVideo ? replayImg : !isPlaying ? playImg : pauseImg}
             alt={isLastVideo ? "replay" : !isPlaying ? "play" : "pause"}
-          
+            onClick={
+              isLastVideo
+                ? () => handleProcess("video-reset")
+                : !isPlaying
+                ? () => handleProcess("play")
+                : () => handleProcess("pause")
+            }
           />
         </button>
       </div>
