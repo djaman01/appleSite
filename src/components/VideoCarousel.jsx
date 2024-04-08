@@ -13,7 +13,7 @@ const VideoCarousel = () => {
   //Creating references to specic elements, so we can keep track of the video we're on
   const videoRef = useRef([]); //reference que l'on donne aux vidéos que l'on va voir dans chaque slide (c'est une array, car il y a plsrs 1 video pour chaque slide)
   const videoDivRef = useRef([]); //Container des points gris = videoSpanRef / Sert à référencé les vidéos ajoutés dans la progressbar et transformés en point gris
-  const videoSpanRef = useRef([]); //Ref des points gris de la progressbar sous les videos
+  const videoSpanRef = useRef([]); //Ref des points gris de la progressbar sous les  / Permet d'avoir une ligne blanche sur la ligne grise et créer une progress bar
 
   //Creatin a state to store the videos qui auront des attributs qu'on va utilsier dans le code, par exemple: faire apparaitre bouton pause si isPlaying == false
   const [video, setVideo] = useState({
@@ -33,13 +33,12 @@ const VideoCarousel = () => {
 
   //!!!!Using gsap to program the videos in the slide to play WHEN THEY ARE IN THE VIEW (quand on les voient sur la page)
   useGSAP(() => {
-
     //!!!!!!! Animation pour faire slider les videos, #slider = id de la div parent qui contient toutes les div où il y a les vidéos
-    gsap.to('#slider', {
-     transform:`translateX(${-100 * videoId}%)`,
-     duration: 2,
-     ease:'power2.inOut'
-    })
+    gsap.to("#slider", {
+      transform: `translateX(${-100 * videoId}%)`, //id=0 ne bouge pas car 0*-100=0; puis à partir le id=1 donc 2eme video, il y aura une transition horizontale X
+      duration: 2,
+      ease: "power2.inOut",
+    });
 
     gsap.to("#video", {
       scrollTrigger: {
@@ -83,9 +82,9 @@ const VideoCarousel = () => {
     if (span[videoId]) {
       //to animate the progress of the video
       let anim = gsap.to(span[videoId], {
-        //onUpdate= what will happen once the animation updates
+        //onUpdate= To make the progress white bar have the same duration than the time of the video
         onUpdate: () => {
-          const progress = Math.ceil(anim.progress() * 100); //.progress() is directly built into Gsap which allows you to get the progress of the animation / *100 is to get a percent
+          const progress = Math.ceil(anim.progress() * 100); //.progress() is directly built into Gsap which allows you to get the progress of the animation / *100 is to get a percent of the progress of the animation
           if (progress != currentProgress) {
             currentProgress = progress;
             gsap.to(videoDivRef.current[videoId], {
@@ -97,14 +96,14 @@ const VideoCarousel = () => {
                   ? "10vw"
                   : "4vw", //for laptops
             });
-
+            //animation de la bar blanche sur la bar grise
             gsap.to(span[videoId], {
               width: `${currentProgress}%`,
               backgroundColor: "white",
             });
           }
         },
-        //onUpdate= To make the progress white bar have the same duration than the time of the video
+        //!!!! What will happen when the video completes: progressbar redevient un point et gris
         onComplete: () => {
           if (isPlaying) {
             gsap.to(videoDivRef.current[videoId], {
@@ -116,20 +115,28 @@ const VideoCarousel = () => {
           }
         },
       });
+
+      //After clicking on reset button, and going back to the first video with id=0; we want the animation of the slides to restart
       if (videoId === 0) {
         anim.restart(); //utility handler given by gsap
       }
+
+      //So that the duration of the white progressbar == the duration of the video that is playing
       const animUpdate = () => {
-        anim.progress( //!!!!.currentTime/videoDuration est obligé pour que la progressbar blanche sache où en est la video et dure comme elle / videoDuration est une property de l'array highlightsSlides dans index.js de utils !!!!
-          videoRef.current[videoId].currentTime / hightlightsSlides[videoId].videoDuration
+        anim.progress(
+          //!!!!.currentTime/videoDuration est obligé pour que la progressbar blanche sache où en est la video et dure comme elle / videoDuration est une property de l'array highlightsSlides dans index.js de utils !!!!
+          videoRef.current[videoId].currentTime /
+            hightlightsSlides[videoId].videoDuration
         );
       };
 
+      //ticker is used to update the progress bar based on the animation of the video == pour que le code synchronise de manière plus précise le progression de la bar avec celle de la vidéo
       if (isPlaying) {
         gsap.ticker.add(animUpdate);
       } else {
         gsap.ticker.remove(animUpdate);
       }
+
     }
   }, [videoId, startPlay]);
 
@@ -189,13 +196,15 @@ const VideoCarousel = () => {
                   preload="auto"
                   playsInline={true}
                   muted
-                  className={`${e.id===2 && 'translate-x-44' } pointer-events-none`} //Il a rajouté cette className pour la video avecl'id 2, car il a remarqué que c'est mieux pour cette vidéo (ne pas réfléchir sur ça)
+                  className={`${
+                    e.id === 2 && "translate-x-44"
+                  } pointer-events-none`} //Il a rajouté cette className pour la video avecl'id 2, car il a remarqué que c'est mieux pour cette vidéo (ne pas réfléchir sur ça)
                   ref={(element) => (videoRef.current[i] = element)} //we're find a specific index in the videoRef's array AND SETTING IT to this current video element
                   //onEnded Va servir à ce que l'animation de la progress bar blanche dure pareil que la vidéo en cours
-                  onEnded={()=> {
+                  onEnded={() => {
                     i !== 3 //= Si ce n'est pas la fin de la vidéo car il y a 4 video donc i va de 0 à 3
-                     ? handleProcess('video-end', i) // we pass 'video-end' and a specific index so that we know which one will be end
-                     : handleProcess('video-last')
+                      ? handleProcess("video-end", i) // we pass 'video-end' and a specific index so that we know which one will be end
+                      : handleProcess("video-last"); //So we now we need to restart
                   }}
                   onPlay={() => {
                     //code a éxecuter lorsque la vidéo commence = we spread all the info about the video AND we set isPlaying to true
@@ -223,17 +232,17 @@ const VideoCarousel = () => {
         ))}
       </div>
 
-      {/* div qui va contenir la progress bar et bouton play/pause des videos du slide */}
+      {/* div qui va contenir la bar grise et bouton play/pause des videos du slide */}
       <div className="relative flex-center mt-10">
         <div className="flex-center py-5 px-7 bg-gray-300 backdrop-blur rounded-full">
-          {/* videoRef.current.map = we map on each video et on la transforme en point gris + on la rajoute dans l'array de videoDivRef */}
+          {/* !!!!videoRef.current.map = we map on each video et on la transforme en point gris + on la rajoute dans l'array de videoDivRef */}
           {videoRef.current.map((_, i) => (
             <span
               key={i}
               ref={(element) => (videoDivRef.current[i] = element)}
               className="mx-2 w-3 h-3 bg-gray-200 rounded-full relative cursor-pointer"
             >
-              {/* On self-close le span s'il n'a pas de contenu */}
+              {/*!!!!videoSpanRef: pour plutard pouvoir créer une progressbar blanche sur la bar grise / On self-close le span s'il n'a pas de contenu */}
               <span
                 className="absolute h-full w-full rounded-full"
                 ref={(element) => (videoSpanRef.current[i] = element)}
