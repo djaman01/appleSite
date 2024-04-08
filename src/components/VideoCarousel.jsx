@@ -12,8 +12,8 @@ gsap.registerPlugin(ScrollTrigger);
 const VideoCarousel = () => {
   //Creating references to specic elements, so we can keep track of the video we're on
   const videoRef = useRef([]); //reference que l'on donne aux vidéos que l'on va voir dans chaque slide (c'est une array, car il y a plsrs 1 video pour chaque slide)
-  const videoDivRef = useRef([]); //Pour référencé les vidéos ajoutés dans la progressbar et transformés en point gris
-  const videoSpanRef = useRef([]); //Pour référencés les vidéos ajoutés dans la progressBar et pour le span nesté dans le span du videoDivRef et transformés le point gris en trait avec durée vidéo
+  const videoDivRef = useRef([]); //Container des points gris = videoSpanRef / Sert à référencé les vidéos ajoutés dans la progressbar et transformés en point gris
+  const videoSpanRef = useRef([]); //Ref des points gris de la progressbar sous les videos
 
   //Creatin a state to store the videos qui auront des attributs qu'on va utilsier dans le code, par exemple: faire apparaitre bouton pause si isPlaying == false
   const [video, setVideo] = useState({
@@ -32,50 +32,104 @@ const VideoCarousel = () => {
   const { isEnd, startPlay, videoId, isLastVideo, isPlaying } = video;
 
   //!!!!Using gsap to program the videos in the slide to play WHEN THEY ARE IN THE VIEW (quand on les voient sur la page)
-  useGSAP(()=>{
-    gsap.to('#video', {
-      scrollTrigger: {
-        trigger:'#video',//La video se lance quand on arrive à l'element avec id=video
-        toggleActions: 'restart none none none' //Quand on voit la video elle restart
-      },
-      onComplete: ()=>{ //Quand on a complété la video
-        setVideo((prev)=>({
-          ...prev, //On spread les properties de la previous state de la video, pour pvr en faire une copie et changer les properties qu'on veut
-          startPlay:true,
-          isPlaying:true,
-        }))
-      }
+  useGSAP(() => {
+
+    //!!!!!!! Animation pour faire slider les videos, #slider = id de la div parent qui contient toutes les div où il y a les vidéos
+    gsap.to('#slider', {
+     transform:`translateX(${-100 * videoId}%)`,
+     duration: 2,
+     ease:'power2.inOut'
     })
-  },[isEnd, videoId]) //to update stuff when the videoId changes + isEnd state value
 
-
+    gsap.to("#video", {
+      scrollTrigger: {
+        trigger: "#video", //La video se lance quand on arrive à l'element avec id=video
+        toggleActions: "restart none none none", //Quand on voit la video elle restart
+      },
+      onComplete: () => {
+        //Quand on a complété la video
+        setVideo((prev) => ({
+          ...prev, //On spread les properties de la previous state de la video, pour pvr en faire une copie et changer les properties qu'on veut
+          startPlay: true,
+          isPlaying: true,
+        }));
+      },
+    });
+  }, [isEnd, videoId]); //to update stuff when the videoId changes + isEnd state value
 
   //!!!!!!:useEffect TO PLAY THE VIDEO, DEPENDING ON THE EXISTENCE OF THE STATE loadedData AND if it has a length > 3
   //explication: if we came to the end, and we're no longer playing the video THEN pause it ELSE, if it's playing THEN IF startPlay is ALSO true THEN we find a specic video we want to trigger, and we play it
   useEffect(() => {
-    if (loadedData.length > 3) {//IF loadedData exists AND had a length > 3
+    if (loadedData.length > 3) {
+      //IF loadedData exists AND had a length > 3
       if (!isPlaying) {
         videoRef.current[videoId].pause(); //Pause the video
-      } else if(startPlay) {
+      } else if (startPlay) {
         videoRef.current[videoId].play(); //!!! PLAY THE VIDEO
       }
     }
   }, [startPlay, videoId, isPlaying, loadedData]);
 
   //On va gérer la state loadedData pour lui donner une valeur = event we pass on it; et que les vidéos démarrent // event = event we pass into it when we call handleLoadedMetaData
-  const handleLoadedMetaData = (index, event) => setLoadedData((prevLoadedData) => [...prevLoadedData, event])
+  const handleLoadedMetaData = (index, event) =>
+    setLoadedData((prevLoadedData) => [...prevLoadedData, event]);
 
-  //useEffect that will animates the progress bar of the video
+  //!!!!! useEffect that will animates the progress bar of the video
   useEffect(() => {
-    const currentProgress = 0;
-    let span = videoSpanRef.current;
+    let currentProgress = 0;
+
+    let span = videoSpanRef.current; //le point gris ciblé
+
     if (span[videoId]) {
+      //to animate the progress of the video
       let anim = gsap.to(span[videoId], {
         //onUpdate= what will happen once the animation updates
-        onUpdate: () => {},
-        //onUpdate= what will happen if the animation is complete
-        onComplete: () => {},
+        onUpdate: () => {
+          const progress = Math.ceil(anim.progress() * 100); //.progress() is directly built into Gsap which allows you to get the progress of the animation / *100 is to get a percent
+          if (progress != currentProgress) {
+            currentProgress = progress;
+            gsap.to(videoDivRef.current[videoId], {
+              //pour transformer le container du pointgris = videoDivRef, en progressBar
+              width:
+                window.innerWidth < 760 //for mobile
+                  ? "10vw"
+                  : window.innerWidth < 1200 //for tablets
+                  ? "10vw"
+                  : "4vw", //for laptops
+            });
+
+            gsap.to(span[videoId], {
+              width: `${currentProgress}%`,
+              backgroundColor: "white",
+            });
+          }
+        },
+        //onUpdate= To make the progress white bar have the same duration than the time of the video
+        onComplete: () => {
+          if (isPlaying) {
+            gsap.to(videoDivRef.current[videoId], {
+              width: "12px",
+            });
+            gsap.to(span[videoId], {
+              backgroundColor: "#afafaf",
+            });
+          }
+        },
       });
+      if (videoId === 0) {
+        anim.restart(); //utility handler given by gsap
+      }
+      const animUpdate = () => {
+        anim.progress( //!!!!.currentTime/videoDuration est obligé pour que la progressbar blanche sache où en est la video et dure comme elle / videoDuration est une property de l'array highlightsSlides dans index.js de utils !!!!
+          videoRef.current[videoId].currentTime / hightlightsSlides[videoId].videoDuration
+        );
+      };
+
+      if (isPlaying) {
+        gsap.ticker.add(animUpdate);
+      } else {
+        gsap.ticker.remove(animUpdate);
+      }
     }
   }, [videoId, startPlay]);
 
@@ -106,6 +160,12 @@ const VideoCarousel = () => {
           isPlaying: !prevVideo.isPlaying,
         }));
         break;
+      case "pause":
+        setVideo((prevVideo) => ({
+          ...prevVideo,
+          isPlaying: !prevVideo.isPlaying,
+        }));
+        break;
 
       default:
         return video; //state variable qui contient les videos et les properties ci-dessu
@@ -129,7 +189,14 @@ const VideoCarousel = () => {
                   preload="auto"
                   playsInline={true}
                   muted
+                  className={`${e.id===2 && 'translate-x-44' } pointer-events-none`} //Il a rajouté cette className pour la video avecl'id 2, car il a remarqué que c'est mieux pour cette vidéo (ne pas réfléchir sur ça)
                   ref={(element) => (videoRef.current[i] = element)} //we're find a specific index in the videoRef's array AND SETTING IT to this current video element
+                  //onEnded Va servir à ce que l'animation de la progress bar blanche dure pareil que la vidéo en cours
+                  onEnded={()=> {
+                    i !== 3 //= Si ce n'est pas la fin de la vidéo car il y a 4 video donc i va de 0 à 3
+                     ? handleProcess('video-end', i) // we pass 'video-end' and a specific index so that we know which one will be end
+                     : handleProcess('video-last')
+                  }}
                   onPlay={() => {
                     //code a éxecuter lorsque la vidéo commence = we spread all the info about the video AND we set isPlaying to true
                     setVideo((prevVideo) => ({
