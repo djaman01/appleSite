@@ -12,8 +12,8 @@ gsap.registerPlugin(ScrollTrigger);
 const VideoCarousel = () => {
   //Creating references to specic elements, so we can keep track of the video we're on
   const videoRef = useRef([]); //reference que l'on donne aux vidéos que l'on va voir dans chaque slide (c'est une array, car il y a plsrs 1 video pour chaque slide)
-  const videoDivRef = useRef([]); //Container des points gris = videoSpanRef / Sert à référencé les vidéos ajoutés dans la progressbar et transformés en point gris
-  const videoSpanRef = useRef([]); //Ref des points gris de la progressbar sous les  / Permet d'avoir une ligne blanche sur la ligne grise et créer une progress bar
+  const videoDivRef = useRef([]); //Container des points gris = deviendra bar grise qui contiendra progress bar blanche
+  const videoSpanRef = useRef([]); //Ref des des points gris eux-même = deviendront progressbar blanche
 
   //Creatin a state to store the videos qui auront des attributs qu'on va utilsier dans le code, par exemple: faire apparaitre bouton pause si isPlaying == false
   const [video, setVideo] = useState({
@@ -40,6 +40,7 @@ const VideoCarousel = () => {
       ease: "power2.inOut",
     });
 
+    //!!!!!! Pour Lancer la vidéo 
     gsap.to("#video", {
       scrollTrigger: {
         trigger: "#video", //La video se lance quand on arrive à l'element avec id=video
@@ -56,39 +57,36 @@ const VideoCarousel = () => {
     });
   }, [isEnd, videoId]); //to update stuff when the videoId changes + isEnd state value
 
-  //!!!!!!:useEffect TO PLAY THE VIDEO, DEPENDING ON THE EXISTENCE OF THE STATE loadedData AND if it has a length > 3
-  //explication: if we came to the end, and we're no longer playing the video THEN pause it ELSE, if it's playing THEN IF startPlay is ALSO true THEN we find a specic video we want to trigger, and we play it
+  //!!!!!!:useEffect TO PLAY OR PAUSE THE VIDEO, DEPENDING ON THE EXISTENCE OF THE STATE loadedData AND if it has a length > 3
+  //loadedData is a state that stores all the videos, if it's length is > 3 it means that it's the last video, because we have only 4
   useEffect(() => {
-    if (loadedData.length > 3) {
-      //IF loadedData exists AND had a length > 3
-      if (!isPlaying) {
-        videoRef.current[videoId].pause(); //Pause the video
-      } else if (startPlay) {
-        videoRef.current[videoId].play(); //!!! PLAY THE VIDEO
+    if (loadedData.length > 3) { //if it's the last video AND:
+      if (!isPlaying) { //If isPlaying=false, then Pause the video
+        videoRef.current[videoId].pause();
+      } else if (startPlay) {//If it's the last video, and isplaying = true, and startPlay= true alors: Play the video !
+        videoRef.current[videoId].play(); 
       }
     }
   }, [startPlay, videoId, isPlaying, loadedData]);
 
-  //On va gérer la state loadedData pour lui donner une valeur = event we pass on it; et que les vidéos démarrent // event = event we pass into it when we call handleLoadedMetaData
+  //!!!!!On va gérer la STATE loadedData pour lui donner une valeur = event we pass on it; et que les vidéos démarrent // event = event we pass into it when we call handleLoadedMetaData
   const handleLoadedMetaData = (index, event) =>
     setLoadedData((prevLoadedData) => [...prevLoadedData, event]);
 
-  //!!!!! useEffect that will animates the progress bar of the video
+  //!!!!! useEffect that will animates the WHITE progress bar of the video
   useEffect(() => {
     let currentProgress = 0;
 
-    let span = videoSpanRef.current; //le point gris ciblé
+    let span = videoSpanRef.current; //le point gris qui est en lien avec la vidéo en cours de lecture
 
     if (span[videoId]) {
-      //to animate the progress of the video
+      //!!!! Pour que le point gris devient large ET puisse contenir la progress bar blanche au-dessus
       let anim = gsap.to(span[videoId], {
-        //onUpdate= To make the progress white bar have the same duration than the time of the video
         onUpdate: () => {
           const progress = Math.ceil(anim.progress() * 100); //.progress() is directly built into Gsap which allows you to get the progress of the animation / *100 is to get a percent of the progress of the animation
           if (progress != currentProgress) {
             currentProgress = progress;
             gsap.to(videoDivRef.current[videoId], {
-              //pour transformer le container du pointgris = videoDivRef, en progressBar
               width:
                 window.innerWidth < 760 //for mobile
                   ? "10vw"
@@ -96,14 +94,15 @@ const VideoCarousel = () => {
                   ? "10vw"
                   : "4vw", //for laptops
             });
-            //animation de la bar blanche sur la bar grise
+            //!!!! Pour animer la progressbar blanche au-dessus de la barre grise qui sera = à current progress de la video ET Blanche
+            //Mais là elle ne va s'animer qu'un court moment pas exactement = à la durée de la video
             gsap.to(span[videoId], {
               width: `${currentProgress}%`,
               backgroundColor: "white",
             });
           }
         },
-        //!!!! What will happen when the video completes: progressbar redevient un point et gris
+        //!!!! What will happen when the video completes: bar grise redevient un point ET Progressbar Blanche redevient grise
         onComplete: () => {
           if (isPlaying) {
             gsap.to(videoDivRef.current[videoId], {
@@ -116,7 +115,7 @@ const VideoCarousel = () => {
         },
       });
 
-      //After clicking on reset button, and going back to the first video with id=0; we want the animation of the slides to restart
+      //!!!!! After clicking on reset button THE SLIDE WILL GO BACK TO THE FIRST VIDEO with id=0 AND the animation will restart
       if (videoId === 0) {
         anim.restart(); //utility handler given by gsap
       }
@@ -146,7 +145,7 @@ const VideoCarousel = () => {
     switch (type) {
       case "video-end": //si type='video-end'== end of the video, on spread les value de la prevues videos et on change les valeurs de isEnd et videoId
         setVideo((prevVideo) => ({
-          ...prevVideo, //On utilise le spread opeartor, pour pouvoir modifier les values des properties de la prevVideo
+          ...prevVideo, //On utilise le spread operator, pour pouvoir modifier les values des properties de la prevVideo
           isEnd: true,
           videoId: i + 1,
         }));
@@ -162,13 +161,13 @@ const VideoCarousel = () => {
         }));
         break;
       case "play":
-        setVideo((prevVideo) => ({
+        setVideo((prevVideo) => ({//Quand on clique sur le bouton et qu'on a passe 'play', isPlaying devient l'inverse de ce que c'était donc l'inverse de false
           ...prevVideo,
           isPlaying: !prevVideo.isPlaying,
         }));
         break;
       case "pause":
-        setVideo((prevVideo) => ({
+        setVideo((prevVideo) => ({//Quand on clique sur le bouton et qu'on a passe 'pause', isPlaying devient l'inverse de ce que c'était donc l'inverse de true
           ...prevVideo,
           isPlaying: !prevVideo.isPlaying,
         }));
@@ -214,7 +213,7 @@ const VideoCarousel = () => {
                     }));
                   }}
                   //onLoadedMetadata will call handleLoadedMetaData that will call setLoadedData THEN the useEffect with loadedData state will trigger the video Play
-                  onLoadedMetadata={(event) => handleLoadedMetaData(i, event)} //onLoadedMetadata= This will get triggered once the Meta data of the video had loaded (=id, playsInline, preLoad ..etc bred, la data) Puis on y passe l'index de la vdieo et l'event
+                  onLoadedMetadata={(event) => handleLoadedMetaData(i, event)} //onLoadedMetadata= This will get triggered once the Meta data of the video had loaded (=id, playsInline, preLoad ..etc bred, la data) Puis on y passe l'index de la video et l'event qui est l'element et donc la vidéo en elle-même
                 >
                   <source src={e.video} type="video/mp4" />
                 </video>
@@ -253,12 +252,12 @@ const VideoCarousel = () => {
         {/* Bouton play/pause/replay */}
         <button className="control-btn">
           <img
-            src={isLastVideo ? replayImg : !isPlaying ? playImg : pauseImg}
+            src={isLastVideo ? replayImg : !isPlaying ? playImg : pauseImg} //SI isPlaying = true met pauseImg dans le bouton 
             alt={isLastVideo ? "replay" : !isPlaying ? "play" : "pause"}
             onClick={
               isLastVideo
                 ? () => handleProcess("video-reset")
-                : !isPlaying
+                : !isPlaying //Si isPlaying=true et qu'on clique: pass "Pause" dans handleProcess, puis dans switch statement ca va transformer isPlaying en false Puis dans le 1er useEffect ça va mettre pause() à la current video
                 ? () => handleProcess("play")
                 : () => handleProcess("pause")
             }
