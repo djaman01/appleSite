@@ -5,9 +5,11 @@ import TheModel from "./TheModel";
 import { useRef, useState } from "react";
 import { yellowImg } from "../utils";
 
+//HERE WE'LL USE THREE.JS LIBRARY FOR REACT, to create and display 3D graphics in a web browser
+import * as THREE from "three"; //==import everything from the Three.js library, and make everything accessible through the 'THREE' Variable
+
 gsap.registerPlugin(ScrollTrigger);
 
-//HERE WE'LL USE THREE.JS LIBRARY FOR REACT
 const Imodel = () => {
   useGSAP(() => {
     gsap.to("#heading", {
@@ -25,15 +27,22 @@ const Imodel = () => {
 
   //All the details properties for the 3D models, small of big iPhone
   const [model, setModel] = useState({
-    title:'iPhone 15 Pro in Natural Titanium',
-    color: ['#8F8A81','#FFE7B9', '#6F6C64'],
+    title: "iPhone 15 Pro in Natural Titanium",
+    color: ["#8F8A81", "#FFE7B9", "#6F6C64"],
     img: yellowImg,
-  })
+  });
 
   //Camera control for the two 3D models view
-  const cameraControlSmall=useRef();
-  const cameraControlLarge= useRef();
+  const cameraControlSmall = useRef();
+  const cameraControlLarge = useRef();
 
+  //The models: Ref to keep track of the 3D model and access it's properties when animating
+  const small = useRef(new THREE.Group());
+  const large = useRef(new THREE.Group());
+
+  //To keep track of the rotation value of each models
+  const [smallRotation, setSmallRotation] = useState(0);
+  const [largeRotation, setLargeRotation] = useState(0);
 
   return (
     <section className="common-padding">
