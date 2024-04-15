@@ -1,5 +1,6 @@
 import Hero from "./components/Hero";
 import Highlights from "./components/Highlights";
+import Imodel from "./components/Imodel";
 import Navbar from "./components/Navbar";
 
 const App = () => {
@@ -8,6 +9,7 @@ const App = () => {
       <Navbar />
       <Hero />
       <Highlights />
+      <Imodel />
     </main>
   );
 };
