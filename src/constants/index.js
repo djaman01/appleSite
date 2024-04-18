@@ -1,13 +1,14 @@
 import {
-  blackImg,
-  blueImg,
   highlightFirstVideo,
   highlightFourthVideo,
   highlightSecondVideo,
   highlightThirdVideo,
-  whiteImg,
-  yellowImg,
 } from "../utils";
+
+import iphoneBlack from "/assets/images/iphone-black-none.png"
+import iphoneWhite from "/assets/images/iphone-white-none.png"
+import iphoneBlue from "/assets/images/iphone-blue-none.png"
+import iphoneNatural from "/assets/images/iphone-natural-none.png"
 
 //A utiliser pour titre header
 export const navLists = ["Store", "Mac", "iPhone", "Support"];
@@ -52,25 +53,25 @@ export const models = [
     id: 1,
     title: "iPhone 15 Pro in Natural Titanium",
     color: ["#8F8A81", "#ffe7b9", "#6f6c64"],
-    img: yellowImg,
+    img: iphoneNatural,
   },
   {
     id: 2,
     title: "iPhone 15 Pro in Blue Titanium",
     color: ["#53596E", "#6395ff", "#21242e"],
-    img: blueImg,
+    img: iphoneBlue,
   },
   {
     id: 3,
     title: "iPhone 15 Pro in White Titanium",
     color: ["#C9C8C2", "#ffffff", "#C9C8C2"],
-    img: whiteImg,
+    img: iphoneWhite,
   },
   {
     id: 4,
     title: "iPhone 15 Pro in Black Titanium",
     color: ["#454749", "#3b3b3b", "#181819"],
-    img: blackImg,
+    img: iphoneBlack,
   },
 ];
 

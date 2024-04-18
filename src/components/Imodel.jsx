@@ -6,6 +6,7 @@ import { yellowImg } from "../utils";
 
 import { models, sizes } from "../constants";
 
+
 gsap.registerPlugin(ScrollTrigger);
 
 const Imodel = () => {
@@ -37,17 +38,17 @@ const Imodel = () => {
           Take a closer look
         </h1>
 
-        {/* Container for the 2 iphones 3D Models, small and large / h-[75vh]= 3/4 de l'écran /overflow-hidden: pour qu'il n'y ait pas de scrollbar*/}
+        {/* h-[75vh]= 3/4 de l'écran /overflow-hidden: pour qu'il n'y ait pas de scrollbar*/}
         <div className="flex flex-col items-center mt-5">
           <div className="w-full h-[75vh] md:h-[90vh] overflow-hidden relative ">
-          
+           <img src={model.img} alt="image" />
           </div>
           <div className="mx-auto w-full">
             <p className="text-sm font-light text-center mb-5">{model.title}</p>
             <div className="flex-center">
-              {/* To map over all the colors that we can choose for the models / ul va etre le container gris avec coté arrondis des petits points avec les couleurs qui vont etre les <li>*/}
+              {/* To map over all the colors that we can choose for the models / ul va etre le container gris des petits points avec les couleurs qui vont etre les <li>*/}
               <ul className="color-container">
-                {models.map((e, i)=>( //onClick va servir à ce que le model 3D de l'iphone prenne la couleur selctionnée dans le <li> et que le titre (model.title) change
+                {models.map((e, i)=>( 
                   <li key={i} className="w-6 h-6 rounded-full mx-2 cursor-pointer" style={{backgroundColor: e.color[0]}} onClick={()=>setModel(e)}> 
                   </li>
                 ))}
