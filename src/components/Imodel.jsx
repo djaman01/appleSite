@@ -2,7 +2,7 @@ import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
 import { useState } from "react";
-import { yellowImg } from "../utils";
+import iphoneNatural from "/assets/images/iphone-natural-none.png"
 
 import { models, sizes } from "../constants";
 
@@ -28,7 +28,7 @@ const Imodel = () => {
   const [model, setModel] = useState({
     title: "iPhone 15 Pro in Natural Titanium",
     color: ["#8F8A81", "#FFE7B9", "#6F6C64"],
-    img: yellowImg,
+    img: iphoneNatural,
   });
 
   return (
@@ -40,8 +40,8 @@ const Imodel = () => {
 
         {/* h-[75vh]= 3/4 de l'écran /overflow-hidden: pour qu'il n'y ait pas de scrollbar*/}
         <div className="flex flex-col items-center mt-5">
-          <div className="w-full h-[75vh] md:h-[90vh] overflow-hidden relative ">
-           <img src={model.img} alt="image" />
+          <div className="w-full h-[75vh] md:h-[90vh] border border-white  ">
+           <img src={model.img} alt="image" className="border border-red-500" />
           </div>
           <div className="mx-auto w-full">
             <p className="text-sm font-light text-center mb-5">{model.title}</p>
